@@ -1,0 +1,22 @@
+Para hacer funcionar el programa debe compilarse de la siguiente manera:
+1. Abrir la consola o terminal
+2. localizarse en la ubicación de los archivos definiciones.h funciones.c principal.c
+3. Ejecutar el make
+	3.1 En el caso de Mac y Linux se escribe en la terminal 
+		make
+		y cuando se termine la compilacion, para ejecutarlo se escribe
+		./programa
+
+	3.2 En el caso de windows se escribe en cmd
+		mingw32-make make
+		y cuando se termine la compilación se ejecuta escribiendo
+		./programa.exe
+
+4. Ahora solo queda ingresar correctamente el nombre de los archivos de entrada con su extensión, y en caso de estar en otra carpeta se anota la ruta y listo, el programa se va a ejecutar
+
+El primer archivo que se pide es el que contiene las lineas de instrucciones
+El segunda archivo que se pide es el que contiene las lineas de control con '0' o 'x'
+
+Si se quieren borrar los archivos .o que se generan se debe digitar en la consola el comando make clean y se eliminarán, también se eliminará el ejecutable	
+
+	
