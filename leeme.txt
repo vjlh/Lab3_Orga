@@ -14,9 +14,6 @@ Para hacer funcionar el programa debe compilarse de la siguiente manera:
 
 4. Ahora solo queda ingresar correctamente el nombre de los archivos de entrada con su extensión, y en caso de estar en otra carpeta se anota la ruta y listo, el programa se va a ejecutar
 
-El primer archivo que se pide es el que contiene las lineas de instrucciones
-El segunda archivo que se pide es el que contiene las lineas de control con '0' o 'x'
-
 Si se quieren borrar los archivos .o que se generan se debe digitar en la consola el comando make clean y se eliminarán, también se eliminará el ejecutable	
 
 	
