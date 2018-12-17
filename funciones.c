@@ -2,15 +2,14 @@
 char REGISTROS_NOMBRES[31][6] = {"$zero","$v0","$v1","$a0","$a1","$a2","$a3","$t0","$t1","$t2","$t3","$t4","$t5","$t6","$t7"
 								,"$s0","$s1","$s2","$s3","$s4","$s5","$s6","$s7","$t8","$t9","$k0","$k1","$gp","$sp","$fp","$ra"};
 
-void leerArchivosYGuardarDatos()		//Esta funcion se encarga del proceso de lectura y obtencion de los datos del archivo
-{										//primero cuenta cuantas lineas tiene el archivo	
-	FILE* archivo_instrucciones;		//hecho esto, pasa todas las instrucciones que están en el archivo
-	FILE* archivo_restricciones;		//a un arreglo de estructuras, almacenando el nombre de la instruccion  	
-	int aux1, aux2, contador, i, j, largo;	//y los registros o direcciones de memoria involucrados en ella
+void leerArchivosYGuardarDatos()		
+{											
+	FILE* archivo_instrucciones;		
+	int aux1, aux2, contador, i, largo;	
 	char buffer[100],buffer2[100],*valor1,*valor2, *valor3, *valor4;
-										//La función no retorna nada ya que todo lo que va modificando son punteros
-	contador = 0;						//A los valores de memoria y variables globales
-	archivo_instrucciones = fopen(NOMBRE_ARCHIVO_1,"r"); //Por lo que solo necesita modificar sin retornar
+										
+	contador = 0;						
+	archivo_instrucciones = fopen(NOMBRE_ARCHIVO_1,"r"); 
 
 	while (!feof(archivo_instrucciones))
 	{
@@ -71,7 +70,7 @@ void leerArchivosYGuardarDatos()		//Esta funcion se encarga del proceso de lectu
 
 			if ((strcmp(valor1,"addi"))==0 || (strcmp(valor1,"addiu"))==0 || (strcmp(valor1,"subi"))==0 || (strcmp(valor1,"add"))==0 
 				|| (strcmp(valor1,"sub"))==0 || (strcmp(valor1,"mul"))==0|| (strcmp(valor1,"div"))==0 || (strcmp(valor1,"beq"))==0 
-				|| (strcmp(valor1,"bne"))==0|| (strcmp(valor1,"bgt"))==0|| (strcmp(valor1,"blt"))==0)
+				|| (strcmp(valor1,"bne"))==0|| (strcmp(valor1,"bgt"))==0|| (strcmp(valor1,"blt"))==0|| (strcmp(valor1,"bnt"))==0)
 			{
 				strcpy(listaDatos[aux1].funcion,valor1);
 				valor2 = strtok(NULL,", ");
@@ -106,6 +105,10 @@ void leerArchivosYGuardarDatos()		//Esta funcion se encarga del proceso de lectu
 			break;	
 	}
 	fclose(archivo_instrucciones);
+	for (int i = 0; i < NINTRUCCIONES; ++i)
+	{
+		printf("%s %s %s %s\n",listaDatos[i].funcion,listaDatos[i].dato1,listaDatos[i].dato2,listaDatos[i].dato3);
+	}
 
 }
 void desarrolloDeInstrucciones()
@@ -115,7 +118,7 @@ void desarrolloDeInstrucciones()
 	
 	//Declaracion de variables a utilizar	
 	int i, k, aux1, total, num2, num3, posicion, temporal;
-	char *funcion, *dato1, *dato2, *dato3, estado, *dato2temp, temp[10];
+	char *funcion, *dato1, *dato2, *dato3, *dato2temp, temp[10];
 	
 	for (i = 0; i < 256; ++i)
 		ARREGLO_SP[i] = 0;
@@ -125,7 +128,7 @@ void desarrolloDeInstrucciones()
 	{						   //Hasta el numero total de instrucciones que fue contado al comienzo de esta función
 		funcion = listaDatos[aux1].funcion;
 
-		if ((strcmp(funcion,"addi"))==0 || (strcmp(funcion,"subi"))==0)
+		if ((strcmp(funcion,"addi"))==0 || (strcmp(funcion,"subi"))==0 || (strcmp(funcion,"addiu"))==0)
 		{
 			dato1 = listaDatos[aux1].dato1;
 			dato2 = listaDatos[aux1].dato2;
@@ -136,7 +139,7 @@ void desarrolloDeInstrucciones()
 				if (strcmp(dato2,REGISTROS_NOMBRES[i])==0)
 					num2 = REGISTROS_VALOR[i];
 
-			if((strcmp(funcion,"addi"))==0)
+			if((strcmp(funcion,"addi"))==0 || (strcmp(funcion,"addiu"))==0 )
 				total = num2 + num3;
 
 			else
@@ -217,7 +220,8 @@ void desarrolloDeInstrucciones()
 			if(strcmp(funcion,"j")==0 || strcmp(funcion,"jal")==0)
 			{	
 				if (strcmp(funcion,"jal")==0)
-					REGISTROS_VALOR[30] = aux+1;
+					REGISTROS_VALOR[30] = aux1+1;
+
 				for (int k = 0; k < NINTRUCCIONES; ++k)
 					if (strcmp(dato1,listaDatos[k].funcion)==0)
 					{	
@@ -227,19 +231,16 @@ void desarrolloDeInstrucciones()
 				aux1 = posicion;
 			}
 
-			else if(strcmp(funcion,"jal")==0)
+			else if(strcmp(funcion,"jr")==0)
 			{	
 				for (int k = 0; k < NINTRUCCIONES; ++k)
-					if (strcmp(dato1,listaDatos[k].funcion)==0)
+					if (strcmp(dato1,REGISTROS_NOMBRES[k])==0)
 					{	
-						posicion = k;
+						posicion = REGISTROS_VALOR[k]-1;
 						break;
 					}
 				aux1 = posicion;
 			}
-
-
-
 		}
 		else if (strcmp(funcion,"sw")== 0)
 		{	
@@ -261,7 +262,6 @@ void desarrolloDeInstrucciones()
 				printf("No se puede ejecutar el programa, ya que StoreWord presenta un error en uno de sus parametros\n");
 				exit(0);
 			}		
-			
 
 		}		
 			
@@ -330,10 +330,9 @@ void escribir_archivo(FILE *archivo)
 	}
 }*/
 void recibirNombreArchivo() 
-{ //Esta función es la que se encarga de pedirle al usuario el nombre de cada uno de los archivos de entrada
-	FILE* arch; //Almacenandolos en NOMBRE_ARCHIVO_1 y NOMBRE_ARCHIVO_2 respectivamente, siendo
+{
+	FILE* arch;
 	NOMBRE_ARCHIVO_1 = (char*)malloc(sizeof(char)*25);//Estas variables globales definidas en las definiciones
-	NOMBRE_ARCHIVO_2 = (char*)malloc(sizeof(char)*25);
 	printf("Para comenzar primero se necesita el nombre de sus dos archivos de entrada junto a su formato\n");
 	printf("Por ejemplo 'entrada1.txt' o prueba1.txt\n\nRecuerde que el primero es el que contiene las instrucciones y el segundo las lineas de control\n");
 	do
@@ -348,20 +347,7 @@ void recibirNombreArchivo()
 		
 	} while (arch == NULL);
 	fclose(arch);
-	//Los do-while en ambos casos son para verificar que se haya hecho un correcto ingreso de los
-	//Nombres de los archivos y si no existe un archivo con el nombre ingresado se pedirá nuevamente
-	do
-	{
-		printf("\nIngrese el nombre del segundo archivo solicitado: ");
-		scanf("%s",NOMBRE_ARCHIVO_2);
-		while(getchar()!='\n');
-		arch = fopen(NOMBRE_ARCHIVO_2,"r");
-		
-		if (arch == NULL) 
-			printf("No se encuentra archivo con ese nombre, intente nuevamente\n");
-		
-	} while (arch == NULL);
-	fclose(arch);
+
 }
 //Función encargada de liberar la memoria que se ocupó durante el procedimiento
 void liberarMemoria()
@@ -370,5 +356,4 @@ void liberarMemoria()
 	free(REGISTROS_VALOR);
 	free(ARREGLO_SP);
 	free(NOMBRE_ARCHIVO_1);
-	free(NOMBRE_ARCHIVO_2);
 }

@@ -22,7 +22,6 @@ int NINTRUCCIONES;
 int *REGISTROS_VALOR;
 int *ARREGLO_SP;
 char *NOMBRE_ARCHIVO_1;
-char *NOMBRE_ARCHIVO_2;
 
 void escribir_archivo(FILE *archivo);
 void leerArchivosYGuardarDatos();
