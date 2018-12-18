@@ -74,26 +74,26 @@ void leerArchivosYGuardarDatos()
 			{
 				strcpy(listaDatos[aux1].funcion,valor1);
 				valor2 = strtok(NULL,", ");
-				strcpy(listaDatos[aux1].dato1,valor2);
+				strcpy(listaDatos[aux1].rd,valor2);
 				valor3 = strtok(NULL,", ");
-				strcpy(listaDatos[aux1].dato2,valor3);
+				strcpy(listaDatos[aux1].rs,valor3);
 				valor4 = strtok(NULL," ");
-				strcpy(listaDatos[aux1].dato3,valor4);
+				strcpy(listaDatos[aux1].rt,valor4);
 			}	
 			else if (strcmp(valor1,"j") ==0 || strcmp(valor1,"jr") == 0 || strcmp(valor1,"jal")==0)
 			{
 				strcpy(listaDatos[aux1].funcion,valor1);
 				valor2 = strtok(NULL," ");
-				strcpy(listaDatos[aux1].dato1,valor2);
+				strcpy(listaDatos[aux1].rd,valor2);
 
 			}
 			else if (strcmp(valor1,"lw")==0 || strcmp(valor1,"sw")==0)
 			{
 				strcpy(listaDatos[aux1].funcion,valor1);
 				valor2 = strtok(NULL,", ");
-				strcpy(listaDatos[aux1].dato1,valor2);
+				strcpy(listaDatos[aux1].rd,valor2);
 				valor3 = strtok(NULL," ");
-				strcpy(listaDatos[aux1].dato2,valor3);
+				strcpy(listaDatos[aux1].rs,valor3);
 			}
 			else
 				strcpy(listaDatos[aux1].funcion,valor1);
@@ -107,9 +107,16 @@ void leerArchivosYGuardarDatos()
 	fclose(archivo_instrucciones);
 	for (int i = 0; i < NINTRUCCIONES; ++i)
 	{
-		printf("%s %s %s %s\n",listaDatos[i].funcion,listaDatos[i].dato1,listaDatos[i].dato2,listaDatos[i].dato3);
+		printf("%s %s %s %s\n",listaDatos[i].funcion,listaDatos[i].rd,listaDatos[i].rs,listaDatos[i].rt);
 	}
 
+}
+void algo()
+{
+	for (int i = 0; i < NINTRUCCIONES; ++i)
+	{
+		
+	}
 }
 void desarrolloDeInstrucciones()
 {
@@ -130,9 +137,9 @@ void desarrolloDeInstrucciones()
 
 		if ((strcmp(funcion,"addi"))==0 || (strcmp(funcion,"subi"))==0 || (strcmp(funcion,"addiu"))==0)
 		{
-			dato1 = listaDatos[aux1].dato1;
-			dato2 = listaDatos[aux1].dato2;
-			dato3 = listaDatos[aux1].dato3;
+			dato1 = listaDatos[aux1].rd;
+			dato2 = listaDatos[aux1].rs;
+			dato3 = listaDatos[aux1].rt;
 
 			num3 = *dato3 - 48;
 			for (int i = 0; i < 31; ++i)
@@ -153,9 +160,9 @@ void desarrolloDeInstrucciones()
 		else if ((strcmp(funcion,"add"))==0 || (strcmp(funcion,"sub"))==0 
 				|| (strcmp(funcion,"mul"))==0|| (strcmp(funcion,"div"))==0)
 		{
-			dato1 = listaDatos[aux1].dato1;
-			dato2 = listaDatos[aux1].dato2;
-			dato3 = listaDatos[aux1].dato3;
+			dato1 = listaDatos[aux1].rd;
+			dato2 = listaDatos[aux1].rs;
+			dato3 = listaDatos[aux1].rt;
 
 			for (int i = 0; i < 31; ++i)
 			{
@@ -186,9 +193,9 @@ void desarrolloDeInstrucciones()
 		else if (strcmp(funcion,"beq")== 0 || strcmp(funcion,"bgt")== 0 || strcmp(funcion,"blt")== 0
 			|| strcmp(funcion,"bne")== 0)
 		{
-			dato1 = listaDatos[aux1].dato1;
-			dato2 = listaDatos[aux1].dato2;
-			dato3 = listaDatos[aux1].dato3;
+			dato1 = listaDatos[aux1].rd;
+			dato2 = listaDatos[aux1].rs;
+			dato3 = listaDatos[aux1].rt;
 			
 			for (int i = 0; i < 31; ++i)
 			{
@@ -215,7 +222,7 @@ void desarrolloDeInstrucciones()
 
 		else if (strcmp(funcion,"j")==0 || strcmp(funcion,"jal")==0 || strcmp(funcion,"jr")==0)
 		{
-			dato1 = listaDatos[aux1].dato1;
+			dato1 = listaDatos[aux1].rd;
 
 			if(strcmp(funcion,"j")==0 || strcmp(funcion,"jal")==0)
 			{	
@@ -244,8 +251,8 @@ void desarrolloDeInstrucciones()
 		}
 		else if (strcmp(funcion,"sw")== 0)
 		{	
-			dato1 = listaDatos[aux1].dato1;
-			dato2 = listaDatos[aux1].dato2;
+			dato1 = listaDatos[aux1].rd;
+			dato2 = listaDatos[aux1].rs;
 			strcpy(temp,dato2);
 
 			dato2temp = strtok(temp,"(");
@@ -267,8 +274,8 @@ void desarrolloDeInstrucciones()
 			
 		else if (strcmp(funcion,"lw")== 0)
 		{	
-			dato1 = listaDatos[aux1].dato1;
-			dato2 = listaDatos[aux1].dato2;
+			dato1 = listaDatos[aux1].rd;
+			dato2 = listaDatos[aux1].rs;
 			strcpy(temp,dato2);
 
 			dato2temp = strtok(temp,"(");
@@ -316,13 +323,13 @@ void escribir_archivo(FILE *archivo)
 				|| (strcmp(valor1,"sub"))==0 || (strcmp(valor1,"mul"))==0|| (strcmp(valor1,"div"))==0 
 				|| (strcmp(valor1,"beq"))==0)
 			
-				fprintf(salida1,"%s %s %s %s\n",listaDatos[i].funcion,listaDatos[i].dato1,listaDatos[i].dato2,listaDatos[i].dato3);
+				fprintf(salida1,"%s %s %s %s\n",listaDatos[i].funcion,listaDatos[i].rd,listaDatos[i].rs,listaDatos[i].rt);
 
 			else if ((strcmp(valor1,"j"))==0)
-				fprintf(salida1,"%s %s\n",listaDatos[i].funcion,listaDatos[i].dato1);
+				fprintf(salida1,"%s %s\n",listaDatos[i].funcion,listaDatos[i].rd);
 			
 			else if ((strcmp(valor1,"lw"))==0 || (strcmp(valor1,"sw"))==0)
-				fprintf(salida1,"%s %s %s\n",listaDatos[i].funcion,listaDatos[i].dato1,listaDatos[i].dato2);
+				fprintf(salida1,"%s %s %s\n",listaDatos[i].funcion,listaDatos[i].rd,listaDatos[i].rs);
 			
 			else
 				fprintf(salida1,"%s\n",listaDatos[i].funcion);
