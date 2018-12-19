@@ -5,7 +5,8 @@ char REGISTROS_NOMBRES[32][6] = {"$zero","$at","$v0","$v1","$a0","$a1","$a2","$a
 void leerArchivosYGuardarDatos()		
 {											
 	FILE* archivo_instrucciones;		
-	int aux1, aux2, contador, i, largo;	
+	int aux1, aux2, contador, i, largo;
+	bool etiqueta;	
 	char buffer[100],buffer2[100],*funcion,*rd, *rs, *rt, *inmediate;
 										
 	contador = 0;						
@@ -20,6 +21,7 @@ void leerArchivosYGuardarDatos()
 		for (i = 0; i < strlen(buffer); ++i)
 			if (buffer[i] == ' ')
 				aux2++;
+			
 
 		if (buffer[0] != '\0' && aux2 != strlen(buffer))
 			contador++;
@@ -33,11 +35,6 @@ void leerArchivosYGuardarDatos()
 	pipeline = (Datos*)calloc(NINTRUCCIONES*50,sizeof(Datos));
 	REGISTROS_VALOR = (int*)calloc(32,sizeof(int));
 	ARREGLO_SP = (int*)calloc(4096,sizeof(int));
-
-	for (i = 0; i < 32; ++i)
-		REGISTROS_VALOR[i] = 0;
-	for (i = 0; i < 4096; ++i)
-		ARREGLO_SP[i] = 0;
 	
 	archivo_instrucciones = fopen(NOMBRE_ARCHIVO_1,"r");
 	
@@ -48,12 +45,18 @@ void leerArchivosYGuardarDatos()
 		memset(buffer,0, 100);
 		memset(buffer2,0, 100);
 		aux2 = 1;
+		etiqueta = false;
 		fscanf(archivo_instrucciones," %119[^\n]",buffer);
 		largo = strlen(buffer);
 
 		for (i = 0; i < largo; ++i)
+		{
 			if (buffer[i] == ' ')
 				aux2++;
+
+			if (buffer[i] == ':')
+				etiqueta = true;
+		}
 
 		if (buffer[0] != '\0' && aux2 != largo && buffer[0] != '\n' && buffer[0] != '#')
 		{	
@@ -63,12 +66,12 @@ void leerArchivosYGuardarDatos()
 							
 			strncpy(buffer2,buffer+i,largo-i);
 			
-			if (aux2==1)
+			if (etiqueta)
 				funcion = strtok(buffer2,":");
 
 			else
 				funcion = strtok(buffer2," ");
-			
+		
 			//Tipo R
 			if ((strcmp(funcion,"add"))==0 || (strcmp(funcion,"sub"))==0 || (strcmp(funcion,"mul"))==0 || (strcmp(funcion,"div"))==0)
 			{
@@ -80,7 +83,7 @@ void leerArchivosYGuardarDatos()
 				rs = strtok(NULL,", ");
 				strcpy(listaDatos[aux1].rs,rs);
 
-				rt = strtok(NULL," ");
+				rt = strtok(NULL," \f\n\r\t\v");
 				strcpy(listaDatos[aux1].rt,rt);
 
 				listaDatos[aux1].escribe = true;
@@ -99,7 +102,7 @@ void leerArchivosYGuardarDatos()
 				rs = strtok(NULL,", ");
 				strcpy(listaDatos[aux1].rs,rs);
 
-				inmediate = strtok(NULL," ");
+				inmediate = strtok(NULL," \f\n\r\t\v");
 				strcpy(listaDatos[aux1].inmediate,inmediate);
 
 				listaDatos[aux1].escribe = true;
@@ -117,7 +120,7 @@ void leerArchivosYGuardarDatos()
 				rs = strtok(NULL,", ");
 				strcpy(listaDatos[aux1].rs,rs);
 
-				inmediate = strtok(NULL," ");
+				inmediate = strtok(NULL," \f\n\r\t\v");
 				strcpy(listaDatos[aux1].inmediate,inmediate);
 
 				listaDatos[aux1].escribe = false;
@@ -129,7 +132,7 @@ void leerArchivosYGuardarDatos()
 			{
 				strcpy(listaDatos[aux1].funcion,funcion);
 
-				inmediate = strtok(NULL," ");
+				inmediate = strtok(NULL," \f\n\r\t\v");
 				strcpy(listaDatos[aux1].inmediate,inmediate);
 
 				listaDatos[aux1].escribe = false;
@@ -140,7 +143,7 @@ void leerArchivosYGuardarDatos()
 			{
 				strcpy(listaDatos[aux1].funcion,funcion);
 
-				rs = strtok(NULL," ");
+				rs = strtok(NULL," \f\n\r\t\v");
 				strcpy(listaDatos[aux1].rs,rs);
 
 				listaDatos[aux1].escribe = false;
@@ -267,16 +270,16 @@ void desarrolloDeInstrucciones()
 {
 	int indice = 0, k, aux1 = 0, total, num2, num3, posicion, temporal;
 	char *funcion, *dato1, *dato2, *dato3;
-	
 
 	while (aux1<NINTRUCCIONES) 
-	{					
-		pipeline[indice] = listaDatos[aux1];	   
+	{	
+		printf("entra a desarrollar %s\n",listaDatos[aux1].funcion);
 		funcion = listaDatos[aux1].funcion;
 
 		//Inmediatas Aritméticas
 		if ((strcmp(funcion,"addi"))==0 || (strcmp(funcion,"subi"))==0 || (strcmp(funcion,"addiu"))==0)
 		{
+			pipeline[indice] = listaDatos[aux1];
 			dato1 = listaDatos[aux1].rd;
 			dato2 = listaDatos[aux1].rs;
 			dato3 = listaDatos[aux1].inmediate;
@@ -302,6 +305,7 @@ void desarrolloDeInstrucciones()
 		else if ((strcmp(funcion,"add"))==0 || (strcmp(funcion,"sub"))==0 
 				|| (strcmp(funcion,"mul"))==0|| (strcmp(funcion,"div"))==0)
 		{
+			pipeline[indice] = listaDatos[aux1];	   
 			dato1 = listaDatos[aux1].rd;
 			dato2 = listaDatos[aux1].rs;
 			dato3 = listaDatos[aux1].rt;
@@ -334,8 +338,9 @@ void desarrolloDeInstrucciones()
 		else if (strcmp(funcion,"beq")== 0 || strcmp(funcion,"bgt")== 0 || strcmp(funcion,"blt")== 0
 				|| strcmp(funcion,"bne")== 0)
 		{
-			dato1 = listaDatos[aux1].rs;
-			dato2 = listaDatos[aux1].rt;
+			pipeline[indice] = listaDatos[aux1];	   
+			dato1 = listaDatos[aux1].rt;
+			dato2 = listaDatos[aux1].rs;
 			dato3 = listaDatos[aux1].inmediate;
 			
 			for (int i = 0; i < 32; ++i)
@@ -356,14 +361,16 @@ void desarrolloDeInstrucciones()
 					{	
 						posicion = k;
 						break;	
-					}	
+					}
+
+				pipeline[indice].salta = 1;		
 				aux1 = posicion;
-				pipeline[indice].salta = 1;
 			}
 		}
 
 		else if (strcmp(funcion,"j")==0 || strcmp(funcion,"jal")==0 || strcmp(funcion,"jr")==0)
 		{
+			pipeline[indice] = listaDatos[aux1];	   
 			dato1 = listaDatos[aux1].inmediate;
 
 			if(strcmp(funcion,"j")==0 || strcmp(funcion,"jal")==0)
@@ -395,6 +402,7 @@ void desarrolloDeInstrucciones()
 		}
 		else if (strcmp(funcion,"sw")== 0)
 		{	
+			pipeline[indice] = listaDatos[aux1];	   
 			dato1 = listaDatos[aux1].rt;
 			dato2 = listaDatos[aux1].rs;
 			dato3 = listaDatos[aux1].inmediate;
@@ -417,6 +425,7 @@ void desarrolloDeInstrucciones()
 			
 		else if (strcmp(funcion,"lw")== 0)
 		{	
+			pipeline[indice] = listaDatos[aux1];	   
 			dato1 = listaDatos[aux1].rd;
 			dato2 = listaDatos[aux1].rs;
 			dato3 = listaDatos[aux1].inmediate;
@@ -437,6 +446,9 @@ void desarrolloDeInstrucciones()
 				exit(0);
 			}			
 		}
+		else
+			indice--;
+
 		indice++;
 		aux1++;
 	}

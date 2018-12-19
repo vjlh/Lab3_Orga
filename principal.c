@@ -4,8 +4,15 @@ int main(int argc, char** argv)
 {	
 	recibirNombreArchivo();
 	leerArchivosYGuardarDatos();
-	//algo();
+	for (int i = 0; i < NINTRUCCIONES; ++i)
+	{
+		printf("%s %s %s %s %s\n",listaDatos[i].funcion,listaDatos[i].rd,listaDatos[i].rs,listaDatos[i].rt, listaDatos[i].inmediate);
+	}
+
+	//int x = strcmp(listaDatos[5].funcion,listaDatos[1].inmediate);
+	//printf("-%i-\n",x);
 	desarrolloDeInstrucciones();
+
 
 	//escribir_archivo1();
 	//liberarMemoria();

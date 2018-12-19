@@ -11,7 +11,7 @@ struct Datos
 	char rd[10];
 	char rs[10];
 	char rt[10];
-	char inmediate[40]; //target si es jump
+	char inmediate[10]; //target si es jump
 	bool escribe;
 	int salta;
 };
