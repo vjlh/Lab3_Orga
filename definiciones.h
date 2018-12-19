@@ -16,16 +16,6 @@ struct Datos
 	int salta;
 };
 
-struct Buffers
-{
-	char IF[10];
-	char ID[10];
-	char EX[10];
-	char MEM[10];
-	char WB[10];
-	int cCInicial;
-	int cCFinal;
-};
 
 typedef struct Datos Datos;
 
@@ -42,6 +32,7 @@ void escribir_archivo(FILE *archivo);
 void leerArchivosYGuardarDatos();
 void hazardDatos();
 void desarrolloDeInstrucciones();
-void escribir_archivo1();
+void archivos_salida();
+void escribir_registros();
 void recibirNombreArchivo();
 void liberarMemoria();

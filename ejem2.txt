@@ -1,0 +1,9 @@
+add $a2, $a3, $t4
+beq $s1, $s2, end
+subi $v1, $v1, 3
+addi $t0, $t2, 2
+subi $t1, $t7, 3
+end:
+	sub $a1, $v0, $at
+	sw $s0, 4096($s5)
+	lw $a3, 4096($s5)

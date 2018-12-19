@@ -204,6 +204,10 @@ void leerArchivosYGuardarDatos()
 }
 void hazardDetenccion(int totIns)
 {
+	FILE *hazard,*solucion;
+	hazard = fopen("HazardDetectados.txt","wt");
+	solucion = fopen("HazardSolucion.txt","wt");
+
 	CCTotal = 4;
 	for (int i = 0; i < totIns-1; ++i)
 	{
@@ -212,14 +216,16 @@ void hazardDetenccion(int totIns)
 		{
 			if(pipeline[i].salta == 1)
 			{
-				printf("Hazard Control en BRANCH en CC: %i\n",CCTotal-1);
+				fprintf(hazard,"Hazard Control en BRANCH en CC: %d\n",CCTotal-1);
+				fprintf(solucion,"Solucionable a través de FLUSH/NOP en IF/ID, ID/EX y EX/MEM\n");
 				CCTotal+=3;
 
 			}
 			
 			else if(pipeline[i].salta == 2)
 			{
-				printf("Hazard control con JUMP en CC: %i\n",CCTotal-3);
+				fprintf(hazard,"Hazard Control en Jump en CC: %d\n",CCTotal-3);
+				fprintf(solucion,"Solucionable a través de FLUSH/NOP en IF/ID\n");
 				CCTotal+=1;
 			}
 		}
@@ -232,18 +238,25 @@ void hazardDetenccion(int totIns)
 				//printf("%s %s %s %s %s\n",pipeline[i+1].funcion,pipeline[i+1].rd,pipeline[i+1].rs,pipeline[i+1].rt, pipeline[i+1].inmediate);
 				if(strcmp(pipeline[i].funcion,"lw")==0)
 				{
-					printf("Hay hazzard de datos arreglable con nop y forwarding en CC: %i\n",CCTotal-2);
+					fprintf(hazard,"Hay hazzard de datos en instruccion X en CC: %i\n",CCTotal-2);
+					fprintf(solucion, "Solucionable con NOP y forwarding MEM/WB a ID/EX\n");
 					CCTotal+=1;
 
 				}
 
 				else
-					printf("Hay hazzard de datos arreglable con forwarding en CC: %i\n",CCTotal-2);
+				{
+					fprintf(hazard,"Hay hazzard de datos en instruccion X en CC: %i\n",CCTotal-2);
+					fprintf(solucion,"Solucionable con forwarding en EX/MEM a ID/EX\n");
+				}
+
 			}
 
 			if (pipeline[i].escribe && (strcmp(pipeline[i].rd,pipeline[i+2].rs)==0 || strcmp(pipeline[i].rd,pipeline[i+2].rt)==0))
-				printf("Hay hazzard de datos arreglable con forwarding en CC: %i\n",CCTotal-2);
-
+			{
+				fprintf(hazard,"Hay hazzard de datos en instruccion X en CC: %i\n",CCTotal-2);
+				fprintf(solucion,"Solucionable con forwarding en EX/MEM a ID/EX\n");
+			}
 		}
 		else
 		{
@@ -253,17 +266,21 @@ void hazardDetenccion(int totIns)
 				//printf("%s %s %s %s %s\n",pipeline[i+1].funcion,pipeline[i+1].rd,pipeline[i+1].rs,pipeline[i+1].rt, pipeline[i+1].inmediate);
 				if(strcmp(pipeline[i].funcion,"lw")==0)
 				{
-					printf("Hay hazzard de datos arreglable con nop y forwarding en CC: %i\n",CCTotal-2);
+					fprintf(hazard,"Hay hazzard de datos en instruccion X en CC: %i\n",CCTotal-2);
+					fprintf(solucion, "Solucionable con NOP y forwarding MEM/WB a ID/EX\n");
 					CCTotal+=1;
-
 				}
 
 				else
-					printf("Hay hazzard de datos arreglable con forwarding en CC: %i\n",CCTotal-2);
+				{
+					fprintf(hazard,"Hay hazzard de datos en instruccion X en CC: %i\n",CCTotal-2);
+					fprintf(solucion,"Solucionable con forwarding en EX/MEM a ID/EX\n");
+				}
 			}
 		}	
 			
 	}
+	escribir_registros();
 	printf("La cantidad final de ciclos de reloj es %i\n",CCTotal);		
 }
 void desarrolloDeInstrucciones()
@@ -273,7 +290,6 @@ void desarrolloDeInstrucciones()
 
 	while (aux1<NINTRUCCIONES) 
 	{	
-		printf("entra a desarrollar %s\n",listaDatos[aux1].funcion);
 		funcion = listaDatos[aux1].funcion;
 
 		//Inmediatas Aritméticas
@@ -457,48 +473,28 @@ void desarrolloDeInstrucciones()
 	/*for (int j = 0; j < indice; ++j)
 	{
 		printf("%s \n",pipeline[j].funcion);
-	}*/
+	}
 	for (int j = 0; j < 32; ++j)
 	{
 		printf("%s: %i\n",REGISTROS_NOMBRES[j],REGISTROS_VALOR[j]);
-	}
+	}*/
 }
-void escribir_archivo(FILE *archivo) 
-{ //Escribe los valores de los 32 registros cada vez que se le llama, que es cada vez que se ejecuta una instruccion
-	int i; //Estos valores van siendo escritos en el archivo de salida 1
+void escribir_registros() 
+{ 
+	int i; FILE *archivo;
+	archivo = fopen("Registros.csv","wt");
 	for (i = 0; i < 32; ++i)
-		fprintf(archivo,"%d;",REGISTROS_VALOR[i]);
+		fprintf(archivo,"%s;%d;\n",REGISTROS_NOMBRES[i],REGISTROS_VALOR[i]);
 	
-	fputc('\n',archivo);
+	//fputc('\n',archivo);
+	fclose(archivo);
 }
 /*void escribir_archivo1()
 { //Busca que funciones si se ejecutaron y las escribe todas en unen el archivo con las lineas de instrucciones
 	int i; //que hicieron que el programa se ejecutaron, no aparecen funciones que el programa no recorrió
 	char* funcion;//Principalmente por estar en una "etiqueta" a la que nunca se llegaba
-	FILE *salida1;
-	salida1 = fopen("salida1.txt","wt");
 
-	for (i = 0; i < NINTRUCCIONES; ++i)
-	{
-		if (listaDatos[i].uso == 1)
-		{	
-			funcion = listaDatos[i].funcion;
-			if ((strcmp(funcion,"addi"))==0 || (strcmp(funcion,"subi"))==0 || (strcmp(funcion,"add"))==0 
-				|| (strcmp(funcion,"sub"))==0 || (strcmp(funcion,"mul"))==0|| (strcmp(funcion,"div"))==0 
-				|| (strcmp(funcion,"beq"))==0)
-			
-				fprintf(salida1,"%s %s %s %s\n",listaDatos[i].funcion,listaDatos[i].rd,listaDatos[i].rs,listaDatos[i].rt);
 
-			else if ((strcmp(funcion,"j"))==0)
-				fprintf(salida1,"%s %s\n",listaDatos[i].funcion,listaDatos[i].rd);
-			
-			else if ((strcmp(funcion,"lw"))==0 || (strcmp(funcion,"sw"))==0)
-				fprintf(salida1,"%s %s %s\n",listaDatos[i].funcion,listaDatos[i].rd,listaDatos[i].rs);
-			
-			else
-				fprintf(salida1,"%s\n",listaDatos[i].funcion);
-		}
-	}
 }*/
 void recibirNombreArchivo() 
 {
