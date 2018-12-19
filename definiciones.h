@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 #include <ctype.h>
 
 struct Datos
@@ -10,10 +11,9 @@ struct Datos
 	char rd[10];
 	char rs[10];
 	char rt[10];
-	char inmediate[40]; //O target si es jump
+	char inmediate[40]; //target si es jump
+	bool escribe;
 };
-
-
 
 struct Buffers
 {
@@ -34,10 +34,11 @@ int NINTRUCCIONES;
 int *REGISTROS_VALOR;
 int *ARREGLO_SP;
 char *NOMBRE_ARCHIVO_1;
+int CCTotal;
 
 void escribir_archivo(FILE *archivo);
 void leerArchivosYGuardarDatos();
-void algo();
+void hazardDatos();
 void desarrolloDeInstrucciones();
 void escribir_archivo1();
 void recibirNombreArchivo();

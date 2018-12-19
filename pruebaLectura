@@ -1,0 +1,18 @@
+addi $t2, $zero, 1
+addi $t3, $zero, 5
+addiu $t4, $zero, 1
+
+ciclo:
+beq $t2, $t3, end
+addi $t2, $t2, 1
+subi $t3, $t3, 1
+bgt $t2, $t3, end
+blt $t2, $t3, end
+bnt $t2, $t3, end
+j ciclo
+jal ciclo
+jr $ra
+
+end:
+close:
+fin:
