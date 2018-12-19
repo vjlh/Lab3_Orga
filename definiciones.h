@@ -10,26 +10,25 @@ struct Datos
 	char rd[10];
 	char rs[10];
 	char rt[10];
+	char inmediate[40]; //O target si es jump
 };
 
 
 
-struct Pipeline
+struct Buffers
 {
-	char IF[40];
-	char ID[10][3];
-	char EX[10][3];
-	char MEM[10][3];
+	char IF[10];
+	char ID[10];
+	char EX[10];
+	char MEM[10];
 	char WB[10];
 	int cCInicial;
 	int cCFinal;
 };
 
 typedef struct Datos Datos;
-typedef struct Pipeline Pipeline;
 
 Datos *listaDatos;
-Pipeline *pipeline;
 
 int NINTRUCCIONES;
 int *REGISTROS_VALOR;

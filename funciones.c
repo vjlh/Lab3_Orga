@@ -6,7 +6,7 @@ void leerArchivosYGuardarDatos()
 {											
 	FILE* archivo_instrucciones;		
 	int aux1, aux2, contador, i, largo;	
-	char buffer[100],buffer2[100],*valor1,*valor2, *valor3, *valor4;
+	char buffer[100],buffer2[100],*funcion,*rd, *rs, *rt, *inmediate;
 										
 	contador = 0;						
 	archivo_instrucciones = fopen(NOMBRE_ARCHIVO_1,"r"); 
@@ -29,9 +29,9 @@ void leerArchivosYGuardarDatos()
 	fclose(archivo_instrucciones);
 
 	NINTRUCCIONES = contador;
-	listaDatos = (Datos*)malloc(sizeof(Datos)*NINTRUCCIONES);
-	REGISTROS_VALOR = (int*)malloc(sizeof(int)*31);
-	ARREGLO_SP = (int*)malloc(sizeof(int)*4096);
+	listaDatos = (Datos*)calloc(NINTRUCCIONES,sizeof(Datos));
+	REGISTROS_VALOR = (int*)calloc(31,sizeof(int));
+	ARREGLO_SP = (int*)calloc(4096,sizeof(int));
 
 	for (i = 0; i < 31; ++i)
 		REGISTROS_VALOR[i] = 0;
@@ -63,40 +63,77 @@ void leerArchivosYGuardarDatos()
 			strncpy(buffer2,buffer+i,largo-i);
 			
 			if (aux2==1)
-				valor1 = strtok(buffer2,":");
+				funcion = strtok(buffer2,":");
 
 			else
-				valor1 = strtok(buffer2," ");
+				funcion = strtok(buffer2," ");
 
-			if ((strcmp(valor1,"addi"))==0 || (strcmp(valor1,"addiu"))==0 || (strcmp(valor1,"subi"))==0 || (strcmp(valor1,"add"))==0 
-				|| (strcmp(valor1,"sub"))==0 || (strcmp(valor1,"mul"))==0|| (strcmp(valor1,"div"))==0 || (strcmp(valor1,"beq"))==0 
-				|| (strcmp(valor1,"bne"))==0|| (strcmp(valor1,"bgt"))==0|| (strcmp(valor1,"blt"))==0|| (strcmp(valor1,"bnt"))==0)
+			//Tipo R
+			if ((strcmp(funcion,"add"))==0 || (strcmp(funcion,"sub"))==0 || (strcmp(funcion,"mul"))==0|| (strcmp(funcion,"div"))==0)
 			{
-				strcpy(listaDatos[aux1].funcion,valor1);
-				valor2 = strtok(NULL,", ");
-				strcpy(listaDatos[aux1].rd,valor2);
-				valor3 = strtok(NULL,", ");
-				strcpy(listaDatos[aux1].rs,valor3);
-				valor4 = strtok(NULL," ");
-				strcpy(listaDatos[aux1].rt,valor4);
-			}	
-			else if (strcmp(valor1,"j") ==0 || strcmp(valor1,"jr") == 0 || strcmp(valor1,"jal")==0)
-			{
-				strcpy(listaDatos[aux1].funcion,valor1);
-				valor2 = strtok(NULL," ");
-				strcpy(listaDatos[aux1].rd,valor2);
+				strcpy(listaDatos[aux1].funcion,funcion);
 
+				rd = strtok(NULL,", ");
+				strcpy(listaDatos[aux1].rd,rd);
+
+				rs = strtok(NULL,", ");
+				strcpy(listaDatos[aux1].rs,rs);
+
+				rt = strtok(NULL," ");
+				strcpy(listaDatos[aux1].rt,rt);
 			}
-			else if (strcmp(valor1,"lw")==0 || strcmp(valor1,"sw")==0)
+
+			//Tipo I
+			else if ((strcmp(funcion,"addi"))==0 || (strcmp(funcion,"addiu"))==0 || (strcmp(funcion,"subi"))==0 || (strcmp(funcion,"beq"))==0 
+					|| (strcmp(funcion,"bne"))==0|| (strcmp(funcion,"bgt"))==0|| (strcmp(funcion,"blt"))==0)
 			{
-				strcpy(listaDatos[aux1].funcion,valor1);
-				valor2 = strtok(NULL,", ");
-				strcpy(listaDatos[aux1].rd,valor2);
-				valor3 = strtok(NULL," ");
-				strcpy(listaDatos[aux1].rs,valor3);
+
+				strcpy(listaDatos[aux1].funcion,funcion);
+
+				rt = strtok(NULL,", ");
+				strcpy(listaDatos[aux1].rt,rt);
+
+				rs = strtok(NULL,", ");
+				strcpy(listaDatos[aux1].rs,rs);
+
+				inmediate = strtok(NULL," ");
+				strcpy(listaDatos[aux1].inmediate,inmediate);
 			}
+
+			//Jumps :D
+			else if (strcmp(funcion,"j") ==0 || strcmp(funcion,"jal")==0)
+			{
+				strcpy(listaDatos[aux1].funcion,funcion);
+
+				inmediate = strtok(NULL," ");
+				strcpy(listaDatos[aux1].inmediate,inmediate);
+			}
+
+			else if (strcmp(funcion,"jr"))
+			{
+				strcpy(listaDatos[aux1].funcion,funcion);
+
+				rs = strtok(NULL," ");
+				strcpy(listaDatos[aux1].rs,rs);
+			}
+
+			else if (strcmp(funcion,"lw")==0 || strcmp(funcion,"sw")==0)
+			{
+
+				strcpy(listaDatos[aux1].funcion,funcion);
+				
+				rt = strtok(NULL,", ");
+				strcpy(listaDatos[aux1].rt,rt);
+
+				inmediate = strtok(NULL," (");
+				strcpy(listaDatos[aux1].inmediate,inmediate);
+				
+				rs = strtok(NULL,")");
+				strcpy(listaDatos[aux1].rs,rs);
+			}
+
 			else
-				strcpy(listaDatos[aux1].funcion,valor1);
+				strcpy(listaDatos[aux1].funcion,funcion);
 		}
 		aux1++;	
 
@@ -107,16 +144,43 @@ void leerArchivosYGuardarDatos()
 	fclose(archivo_instrucciones);
 	for (int i = 0; i < NINTRUCCIONES; ++i)
 	{
-		printf("%s %s %s %s\n",listaDatos[i].funcion,listaDatos[i].rd,listaDatos[i].rs,listaDatos[i].rt);
+		printf("%s %s %s %s %s\n",listaDatos[i].funcion,listaDatos[i].rd,listaDatos[i].rs,listaDatos[i].rt, listaDatos[i].inmediate);
 	}
 
 }
 void algo()
 {
-	for (int i = 0; i < NINTRUCCIONES; ++i)
+	for (int i = 0; i < NINTRUCCIONES-1; ++i)
 	{
-		
-	}
+		if (i<NINTRUCCIONES-2){
+			if (strcmp(listaDatos[i].funcion,"lw")==0 && strcmp(listaDatos[i+1].funcion,"sw")==0)
+				printf("Hay hazzard arreglable con nop y forwarding\n");
+
+			if (strcmp(listaDatos[i].rd,listaDatos[i+1].rs)==0)
+			{
+				if(strcmp(listaDatos[i].funcion,"lw")==0 || strcmp(listaDatos[i].rd,listaDatos[i+1].rt)==0)
+					printf("Hay hazzard arreglable con nop y forwarding\n");
+
+				else
+					printf("Hay hazzard arreglable con forwarding\n");
+			}
+
+			if (strcmp(listaDatos[i].rd,listaDatos[i+2].rs)==0 || strcmp(listaDatos[i].rd,listaDatos[i+2].rt)==0)
+				printf("Hay hazzard arreglable con forwarding\n");
+
+			else if (strcmp(listaDatos[i].rd,listaDatos[i+2].rt)==0)
+				printf("Hay hazzard arreglable con forwarding\n");
+
+		}
+		else {
+			if (strcmp(listaDatos[i].rd,listaDatos[i+1].rs)==0)
+				printf("Hay hazzard arreglable con forwarding\n");
+
+			else if (strcmp(listaDatos[i].rd,listaDatos[i+1].rt)==0)
+				printf("Hay hazzard arreglable con forwarding\n");
+
+		}
+	}	
 }
 void desarrolloDeInstrucciones()
 {
@@ -310,7 +374,7 @@ void escribir_archivo(FILE *archivo)
 /*void escribir_archivo1()
 { //Busca que funciones si se ejecutaron y las escribe todas en unen el archivo con las lineas de instrucciones
 	int i; //que hicieron que el programa se ejecutaron, no aparecen funciones que el programa no recorrió
-	char* valor1;//Principalmente por estar en una "etiqueta" a la que nunca se llegaba
+	char* funcion;//Principalmente por estar en una "etiqueta" a la que nunca se llegaba
 	FILE *salida1;
 	salida1 = fopen("salida1.txt","wt");
 
@@ -318,17 +382,17 @@ void escribir_archivo(FILE *archivo)
 	{
 		if (listaDatos[i].uso == 1)
 		{	
-			valor1 = listaDatos[i].funcion;
-			if ((strcmp(valor1,"addi"))==0 || (strcmp(valor1,"subi"))==0 || (strcmp(valor1,"add"))==0 
-				|| (strcmp(valor1,"sub"))==0 || (strcmp(valor1,"mul"))==0|| (strcmp(valor1,"div"))==0 
-				|| (strcmp(valor1,"beq"))==0)
+			funcion = listaDatos[i].funcion;
+			if ((strcmp(funcion,"addi"))==0 || (strcmp(funcion,"subi"))==0 || (strcmp(funcion,"add"))==0 
+				|| (strcmp(funcion,"sub"))==0 || (strcmp(funcion,"mul"))==0|| (strcmp(funcion,"div"))==0 
+				|| (strcmp(funcion,"beq"))==0)
 			
 				fprintf(salida1,"%s %s %s %s\n",listaDatos[i].funcion,listaDatos[i].rd,listaDatos[i].rs,listaDatos[i].rt);
 
-			else if ((strcmp(valor1,"j"))==0)
+			else if ((strcmp(funcion,"j"))==0)
 				fprintf(salida1,"%s %s\n",listaDatos[i].funcion,listaDatos[i].rd);
 			
-			else if ((strcmp(valor1,"lw"))==0 || (strcmp(valor1,"sw"))==0)
+			else if ((strcmp(funcion,"lw"))==0 || (strcmp(funcion,"sw"))==0)
 				fprintf(salida1,"%s %s %s\n",listaDatos[i].funcion,listaDatos[i].rd,listaDatos[i].rs);
 			
 			else
