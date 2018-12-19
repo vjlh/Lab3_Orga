@@ -30,6 +30,7 @@ void leerArchivosYGuardarDatos()
 
 	NINTRUCCIONES = contador;
 	listaDatos = (Datos*)calloc(NINTRUCCIONES,sizeof(Datos));
+	pipeline = (Datos*)calloc(NINTRUCCIONES*50,sizeof(Datos));
 	REGISTROS_VALOR = (int*)calloc(32,sizeof(int));
 	ARREGLO_SP = (int*)calloc(4096,sizeof(int));
 
@@ -198,50 +199,79 @@ void leerArchivosYGuardarDatos()
 	}*/
 
 }
-void hazardDatos()
+void hazardDetenccion(int totIns)
 {
-	for (int i = 0; i < NINTRUCCIONES-1; ++i)
+	CCTotal = 4;
+	for (int i = 0; i < totIns-1; ++i)
 	{
-		if (i<NINTRUCCIONES-2)
+		CCTotal++;
+		if (!pipeline[i].escribe && strcmp(pipeline[i].funcion,"sw")!=0)
 		{
-			if (listaDatos[i].escribe && (strcmp(listaDatos[i].rd,listaDatos[i+1].rs)==0 || strcmp(listaDatos[i].rd,listaDatos[i+1].rt)==0))
+			if(pipeline[i].salta == 1)
 			{
-				//printf("%s %s %s %s %s\n",listaDatos[i].funcion,listaDatos[i].rd,listaDatos[i].rs,listaDatos[i].rt, listaDatos[i].inmediate);
-				//printf("%s %s %s %s %s\n",listaDatos[i+1].funcion,listaDatos[i+1].rd,listaDatos[i+1].rs,listaDatos[i+1].rt, listaDatos[i+1].inmediate);
-				if(strcmp(listaDatos[i].funcion,"lw")==0)
-					printf("Hay hazzard de datos arreglable con nop y forwarding\n");
+				printf("Hazard Control en BRANCH en CC: %i\n",CCTotal-1);
+				CCTotal+=3;
+
+			}
+			
+			else if(pipeline[i].salta == 2)
+			{
+				printf("Hazard control con JUMP en CC: %i\n",CCTotal-3);
+				CCTotal+=1;
+			}
+		}
+
+		if (i<totIns-2)
+		{
+			if (pipeline[i].escribe && (strcmp(pipeline[i].rd,pipeline[i+1].rs)==0 || strcmp(pipeline[i].rd,pipeline[i+1].rt)==0))
+			{
+				//printf("%s %s %s %s %s\n",pipeline[i].funcion,pipeline[i].rd,pipeline[i].rs,pipeline[i].rt, pipeline[i].inmediate);
+				//printf("%s %s %s %s %s\n",pipeline[i+1].funcion,pipeline[i+1].rd,pipeline[i+1].rs,pipeline[i+1].rt, pipeline[i+1].inmediate);
+				if(strcmp(pipeline[i].funcion,"lw")==0)
+				{
+					printf("Hay hazzard de datos arreglable con nop y forwarding en CC: %i\n",CCTotal-2);
+					CCTotal+=1;
+
+				}
 
 				else
-					printf("Hay hazzard de datos arreglable con forwarding\n");
+					printf("Hay hazzard de datos arreglable con forwarding en CC: %i\n",CCTotal-2);
 			}
 
-			if (listaDatos[i].escribe && (strcmp(listaDatos[i].rd,listaDatos[i+2].rs)==0 || strcmp(listaDatos[i].rd,listaDatos[i+2].rt)==0))
-				printf("Hay hazzard de datos arreglable con forwarding\n");
+			if (pipeline[i].escribe && (strcmp(pipeline[i].rd,pipeline[i+2].rs)==0 || strcmp(pipeline[i].rd,pipeline[i+2].rt)==0))
+				printf("Hay hazzard de datos arreglable con forwarding en CC: %i\n",CCTotal-2);
 
 		}
 		else
-			if (listaDatos[i].escribe && (strcmp(listaDatos[i].rd,listaDatos[i+1].rs)==0 || strcmp(listaDatos[i].rd,listaDatos[i+1].rt)==0))
+		{
+			if (pipeline[i].escribe && (strcmp(pipeline[i].rd,pipeline[i+1].rs)==0 || strcmp(pipeline[i].rd,pipeline[i+1].rt)==0))
 			{
-				//printf("%s %s %s %s %s\n",listaDatos[i].funcion,listaDatos[i].rd,listaDatos[i].rs,listaDatos[i].rt, listaDatos[i].inmediate);
-				//printf("%s %s %s %s %s\n",listaDatos[i+1].funcion,listaDatos[i+1].rd,listaDatos[i+1].rs,listaDatos[i+1].rt, listaDatos[i+1].inmediate);
-				if(strcmp(listaDatos[i].funcion,"lw")==0)
-					printf("Hay hazzard de datos arreglable con nop y forwarding\n");
+				//printf("%s %s %s %s %s\n",pipeline[i].funcion,pipeline[i].rd,pipeline[i].rs,pipeline[i].rt, pipeline[i].inmediate);
+				//printf("%s %s %s %s %s\n",pipeline[i+1].funcion,pipeline[i+1].rd,pipeline[i+1].rs,pipeline[i+1].rt, pipeline[i+1].inmediate);
+				if(strcmp(pipeline[i].funcion,"lw")==0)
+				{
+					printf("Hay hazzard de datos arreglable con nop y forwarding en CC: %i\n",CCTotal-2);
+					CCTotal+=1;
+
+				}
 
 				else
-					printf("Hay hazzard de datos arreglable con forwarding\n");
+					printf("Hay hazzard de datos arreglable con forwarding en CC: %i\n",CCTotal-2);
 			}
+		}	
 			
-	}		
+	}
+	printf("La cantidad final de ciclos de reloj es %i\n",CCTotal);		
 }
 void desarrolloDeInstrucciones()
 {
-	int k, aux1, total, num2, num3, posicion, temporal;
+	int indice = 0, k, aux1 = 0, total, num2, num3, posicion, temporal;
 	char *funcion, *dato1, *dato2, *dato3;
 	
-	CCTotal = 4;
-	aux1 = 0;
+
 	while (aux1<NINTRUCCIONES) 
-	{						   
+	{					
+		pipeline[indice] = listaDatos[aux1];	   
 		funcion = listaDatos[aux1].funcion;
 
 		//Inmediatas Aritméticas
@@ -266,7 +296,6 @@ void desarrolloDeInstrucciones()
 			for (int j = 0; j < 32; ++j)
 				if (strcmp(dato1,REGISTROS_NOMBRES[j])==0)
 					REGISTROS_VALOR[j] = total;
-			CCTotal++;
 
 		}			
 
@@ -299,10 +328,7 @@ void desarrolloDeInstrucciones()
 
 			for (int j = 0; j < 32; ++j)
 				if (strcmp(dato1,REGISTROS_NOMBRES[j])==0)
-					REGISTROS_VALOR[j] = total;	
-			CCTotal++;
-
-				
+					REGISTROS_VALOR[j] = total;		
 		}	
 
 		else if (strcmp(funcion,"beq")== 0 || strcmp(funcion,"bgt")== 0 || strcmp(funcion,"blt")== 0
@@ -311,7 +337,6 @@ void desarrolloDeInstrucciones()
 			dato1 = listaDatos[aux1].rs;
 			dato2 = listaDatos[aux1].rt;
 			dato3 = listaDatos[aux1].inmediate;
-			CCTotal++;
 			
 			for (int i = 0; i < 32; ++i)
 			{
@@ -333,17 +358,13 @@ void desarrolloDeInstrucciones()
 						break;	
 					}	
 				aux1 = posicion;
-
-				printf("hazard de control branch en %i\n",CCTotal);
-				CCTotal = CCTotal+3;
-
+				pipeline[indice].salta = 1;
 			}
 		}
 
 		else if (strcmp(funcion,"j")==0 || strcmp(funcion,"jal")==0 || strcmp(funcion,"jr")==0)
 		{
 			dato1 = listaDatos[aux1].inmediate;
-			CCTotal++;
 
 			if(strcmp(funcion,"j")==0 || strcmp(funcion,"jal")==0)
 			{	
@@ -369,9 +390,7 @@ void desarrolloDeInstrucciones()
 					}
 				aux1 = posicion;
 			}
-			printf("Hazard de Control JUMP ciclo %i, se añade una espera\n",CCTotal-3);
-
-			CCTotal++;
+			pipeline[indice].salta = 2;
 
 		}
 		else if (strcmp(funcion,"sw")== 0)
@@ -387,7 +406,6 @@ void desarrolloDeInstrucciones()
 					if (strcmp(dato1,REGISTROS_NOMBRES[k])==0)
 						ARREGLO_SP[(temporal/4)]= REGISTROS_VALOR[k];
 				
-				CCTotal++;
 			}		
 			else if(temporal%4 != 0)
 			{
@@ -412,8 +430,6 @@ void desarrolloDeInstrucciones()
 						REGISTROS_VALOR[k] = ARREGLO_SP[(temporal/4)];
 						break;
 					}
-				CCTotal++;
-
 			}
 			else if(temporal%4 != 0)
 			{
@@ -421,12 +437,18 @@ void desarrolloDeInstrucciones()
 				exit(0);
 			}			
 		}
+		indice++;
 		aux1++;
 	}
-	printf("La cantidad de ciclos de reloj son : %i\n",CCTotal);
-	for (int i = 0; i < 32; ++i)
+
+	hazardDetenccion(indice);
+	/*for (int j = 0; j < indice; ++j)
 	{
-		printf("%s: %i\n",REGISTROS_NOMBRES[i],REGISTROS_VALOR[i]);
+		printf("%s \n",pipeline[j].funcion);
+	}*/
+	for (int j = 0; j < 32; ++j)
+	{
+		printf("%s: %i\n",REGISTROS_NOMBRES[j],REGISTROS_VALOR[j]);
 	}
 }
 void escribir_archivo(FILE *archivo) 

@@ -13,6 +13,7 @@ struct Datos
 	char rt[10];
 	char inmediate[40]; //target si es jump
 	bool escribe;
+	int salta;
 };
 
 struct Buffers
@@ -29,6 +30,7 @@ struct Buffers
 typedef struct Datos Datos;
 
 Datos *listaDatos;
+Datos *pipeline;
 
 int NINTRUCCIONES;
 int *REGISTROS_VALOR;
