@@ -31,6 +31,7 @@ void leerArchivosYGuardarDatos()
 	fclose(archivo_instrucciones);
 
 	NINTRUCCIONES = contador;
+	ID = 0;
 	listaDatos = (Datos*)calloc(NINTRUCCIONES,sizeof(Datos));
 	pipeline = (Datos*)calloc(NINTRUCCIONES*50,sizeof(Datos));
 	REGISTROS_VALOR = (int*)calloc(32,sizeof(int));
@@ -186,9 +187,12 @@ void leerArchivosYGuardarDatos()
 			else
 			{
 				strcpy(listaDatos[aux1].funcion,funcion);
+				listaDatos[aux1].etiqueta = 1;
 				listaDatos[aux1].escribe = false;
 			}
 		}
+		listaDatos[aux1].id = ID;
+		ID++;
 		aux1++;	
 
 		fgetc(archivo_instrucciones);
@@ -205,8 +209,12 @@ void leerArchivosYGuardarDatos()
 void hazardDetenccion(int totIns)
 {
 	FILE *hazard,*solucion;
-	hazard = fopen("HazardDetectados.txt","wt");
+	int indice=0,instruccion;
+	hazard = fopen("HazardDetectados.csv","wt");
 	solucion = fopen("HazardSolucion.txt","wt");
+
+	fprintf(hazard,"Hazard;Tipo;Instruccion;CC\n");
+	fprintf(solucion,"Hazard|Solucion\n");
 
 	CCTotal = 4;
 	for (int i = 0; i < totIns-1; ++i)
@@ -214,18 +222,22 @@ void hazardDetenccion(int totIns)
 		CCTotal++;
 		if (!pipeline[i].escribe && strcmp(pipeline[i].funcion,"sw")!=0)
 		{
+			instruccion = indiceInstruccion(pipeline[i].id);
+
 			if(pipeline[i].salta == 1)
 			{
-				fprintf(hazard,"Hazard Control en BRANCH en CC: %d\n",CCTotal-1);
-				fprintf(solucion,"Solucionable a través de FLUSH/NOP en IF/ID, ID/EX y EX/MEM\n");
+				indice++;
+				fprintf(hazard,"%i\t;Control;%i\t;%i\t\n",indice,instruccion,CCTotal-1);
+				fprintf(solucion,"  %i   |Solucionable con: FLUSH/NOP en IF/ID, ID/EX y EX/MEM\n",indice);
 				CCTotal+=3;
 
 			}
 			
 			else if(pipeline[i].salta == 2)
 			{
-				fprintf(hazard,"Hazard Control en Jump en CC: %d\n",CCTotal-3);
-				fprintf(solucion,"Solucionable a través de FLUSH/NOP en IF/ID\n");
+				indice++;
+				fprintf(hazard,"%i\t;Control;%i\t;%i\t\n",indice,instruccion,CCTotal-3);
+				fprintf(solucion,"  %i   |Solucionable con: FLUSH/NOP en IF/ID\n",indice);
 				CCTotal+=1;
 			}
 		}
@@ -234,52 +246,62 @@ void hazardDetenccion(int totIns)
 		{
 			if (pipeline[i].escribe && (strcmp(pipeline[i].rd,pipeline[i+1].rs)==0 || strcmp(pipeline[i].rd,pipeline[i+1].rt)==0))
 			{
+				instruccion = indiceInstruccion(pipeline[i+1].id);
 				//printf("%s %s %s %s %s\n",pipeline[i].funcion,pipeline[i].rd,pipeline[i].rs,pipeline[i].rt, pipeline[i].inmediate);
 				//printf("%s %s %s %s %s\n",pipeline[i+1].funcion,pipeline[i+1].rd,pipeline[i+1].rs,pipeline[i+1].rt, pipeline[i+1].inmediate);
 				if(strcmp(pipeline[i].funcion,"lw")==0)
 				{
-					fprintf(hazard,"Hay hazzard de datos en instruccion X en CC: %i\n",CCTotal-2);
-					fprintf(solucion, "Solucionable con NOP y forwarding MEM/WB a ID/EX\n");
+					indice++;
+					fprintf(hazard,"%i\t;Datos;%i\t;%i\t\n",indice,instruccion,CCTotal-2);
+					fprintf(solucion, "  %i   |Solucionable con: NOP y forwarding MEM/WB a ID/EX\n",indice);
 					CCTotal+=1;
 
 				}
 
 				else
 				{
-					fprintf(hazard,"Hay hazzard de datos en instruccion X en CC: %i\n",CCTotal-2);
-					fprintf(solucion,"Solucionable con forwarding en EX/MEM a ID/EX\n");
+					indice++;
+					fprintf(hazard,"%i\t;Datos;%i\t;%i\t\n",indice,instruccion,CCTotal-2);
+					fprintf(solucion,"  %i   |Solucionable con: Forwarding en EX/MEM a ID/EX\n",indice);
 				}
 
 			}
 
 			if (pipeline[i].escribe && (strcmp(pipeline[i].rd,pipeline[i+2].rs)==0 || strcmp(pipeline[i].rd,pipeline[i+2].rt)==0))
 			{
-				fprintf(hazard,"Hay hazzard de datos en instruccion X en CC: %i\n",CCTotal-2);
-				fprintf(solucion,"Solucionable con forwarding en EX/MEM a ID/EX\n");
+				instruccion = indiceInstruccion(pipeline[i+2].id);
+				indice++;
+				fprintf(hazard,"%i\t;Datos;%i\t;%i\t\n",indice,instruccion,CCTotal-2);
+				fprintf(solucion,"  %i   |Solucionable con: Forwarding en EX/MEM a ID/EX\n",indice);
 			}
 		}
 		else
 		{
 			if (pipeline[i].escribe && (strcmp(pipeline[i].rd,pipeline[i+1].rs)==0 || strcmp(pipeline[i].rd,pipeline[i+1].rt)==0))
 			{
+				instruccion = indiceInstruccion(pipeline[i+1].id);
 				//printf("%s %s %s %s %s\n",pipeline[i].funcion,pipeline[i].rd,pipeline[i].rs,pipeline[i].rt, pipeline[i].inmediate);
 				//printf("%s %s %s %s %s\n",pipeline[i+1].funcion,pipeline[i+1].rd,pipeline[i+1].rs,pipeline[i+1].rt, pipeline[i+1].inmediate);
 				if(strcmp(pipeline[i].funcion,"lw")==0)
 				{
-					fprintf(hazard,"Hay hazzard de datos en instruccion X en CC: %i\n",CCTotal-2);
-					fprintf(solucion, "Solucionable con NOP y forwarding MEM/WB a ID/EX\n");
+					indice++;
+					fprintf(hazard,"%i\t;Datos;%i\t;%i\t\n",indice,instruccion,CCTotal-2);
+					fprintf(solucion, "  %i   |Solucionable con: NOP y forwarding MEM/WB a ID/EX\n",indice);
 					CCTotal+=1;
 				}
 
 				else
 				{
-					fprintf(hazard,"Hay hazzard de datos en instruccion X en CC: %i\n",CCTotal-2);
-					fprintf(solucion,"Solucionable con forwarding en EX/MEM a ID/EX\n");
+					indice++;
+					fprintf(hazard,"%i\t;Datos;%i\t;%i\t\n",indice,instruccion,CCTotal-2);
+					fprintf(solucion,"  %i   |Solucionable con: Forwarding en EX/MEM a ID/EX\n",indice);
 				}
 			}
 		}	
 			
 	}
+	fclose(hazard);
+	fclose(solucion);
 	escribir_registros();
 	printf("La cantidad final de ciclos de reloj es %i\n",CCTotal);		
 }
@@ -479,6 +501,20 @@ void desarrolloDeInstrucciones()
 		printf("%s: %i\n",REGISTROS_NOMBRES[j],REGISTROS_VALOR[j]);
 	}*/
 }
+
+int indiceInstruccion(int id)
+{
+	int indice = 1;
+	for (int i = 0; i < NINTRUCCIONES; ++i)
+	{
+		if(listaDatos[i].etiqueta == 1)
+			indice--;
+		if(listaDatos[i].id == id)
+			break;
+		indice++;
+	}
+	return indice;
+}
 void escribir_registros() 
 { 
 	int i; FILE *archivo;
@@ -486,7 +522,6 @@ void escribir_registros()
 	for (i = 0; i < 32; ++i)
 		fprintf(archivo,"%s;%d;\n",REGISTROS_NOMBRES[i],REGISTROS_VALOR[i]);
 	
-	//fputc('\n',archivo);
 	fclose(archivo);
 }
 /*void escribir_archivo1()

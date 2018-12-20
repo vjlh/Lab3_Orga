@@ -12,8 +12,10 @@ struct Datos
 	char rs[10];
 	char rt[10];
 	char inmediate[10]; //target si es jump
-	bool escribe;
 	int salta;
+	int etiqueta;
+	int id;
+	bool escribe;
 };
 
 
@@ -25,6 +27,7 @@ Datos *pipeline;
 int NINTRUCCIONES;
 int *REGISTROS_VALOR;
 int *ARREGLO_SP;
+int ID;
 char *NOMBRE_ARCHIVO_1;
 int CCTotal;
 
@@ -32,6 +35,7 @@ void escribir_archivo(FILE *archivo);
 void leerArchivosYGuardarDatos();
 void hazardDatos();
 void desarrolloDeInstrucciones();
+int indiceInstruccion(int);
 void archivos_salida();
 void escribir_registros();
 void recibirNombreArchivo();
