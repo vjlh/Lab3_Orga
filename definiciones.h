@@ -3,8 +3,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-#include <ctype.h>
 
+/*
+ * En este archivo se encuentran las definicion de la estructura a utilizar, las variables globales y los encabezados
+   de cada función
+ * @author: Valentina Ligueño
+ * @version: 21/12/2018
+ */
+
+//Estructura
 struct Datos
 {
 	char funcion[10];
@@ -18,25 +25,25 @@ struct Datos
 	bool escribe;
 };
 
-
 typedef struct Datos Datos;
 
+//Definicion de variables globales
 Datos *listaDatos;
 Datos *pipeline;
-
 int NINTRUCCIONES;
 int *REGISTROS_VALOR;
 int *ARREGLO_SP;
 int ID;
-char *NOMBRE_ARCHIVO_1;
 int CCTotal;
+char *NOMBRE_ARCHIVO_1;
 
-void escribir_archivo(FILE *archivo);
+//Encabezados de funcion
+void recibirNombreArchivo();
 void leerArchivosYGuardarDatos();
-void hazardDatos();
 void desarrolloDeInstrucciones();
+void hazardDeteccion(int);
 int indiceInstruccion(int);
 void archivos_salida();
-void escribir_registros();
-void recibirNombreArchivo();
+void escribir_registros(char*);
+char* recibirNombreArchivoSalida(char*);
 void liberarMemoria();

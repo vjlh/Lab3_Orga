@@ -1,7 +1,44 @@
 #include "definiciones.h"
+/*
+ * En este archivo se encuentran todas las funciones que se utilizan para el correcto funcionamiento
+   del programa
+ * @author: Valentina Ligueño
+ * @version: 21/12/2018
+ */
 char REGISTROS_NOMBRES[32][6] = {"$zero","$at","$v0","$v1","$a0","$a1","$a2","$a3","$t0","$t1","$t2","$t3","$t4","$t5","$t6","$t7"
 								,"$s0","$s1","$s2","$s3","$s4","$s5","$s6","$s7","$t8","$t9","$k0","$k1","$gp","$sp","$fp","$ra"};
 
+/*
+ * Esta función se encarga de recibir el nombre del archivo de entrada, asegurandose de que
+   se entregue un archivo existente.
+ * @return No retorna nada, ya que el nombre del archivo queda guardado en una variable global
+ */
+void recibirNombreArchivo() 
+{
+	FILE* arch;
+	NOMBRE_ARCHIVO_1 = (char*)calloc(25,sizeof(char));//Estas variables globales definidas en las definiciones
+	printf("Para comenzar primero se necesita el nombre de sus dos archivos de entrada junto a su formato\n");
+	printf("Por ejemplo 'entrada1.txt' o prueba1.txt\n\nRecuerde que el primero es el que contiene las instrucciones y el segundo las lineas de control\n");
+	do
+	{
+		printf("\nIngrese el nombre del primer archivo solicitado: ");
+		scanf("%s",NOMBRE_ARCHIVO_1);
+		while(getchar()!='\n');
+		arch = fopen(NOMBRE_ARCHIVO_1,"r");
+		
+		if (arch == NULL) 
+			printf("No se encuentra archivo con ese nombre, intente nuevamente\n");
+		
+	} while (arch == NULL);
+	fclose(arch);
+
+}
+
+/*
+ * Esta funcion se encarga del proceso de lectura y obtencion de los datos del archivo 
+ * @return No retorna nada porque los datos se almacenan en una estructura declarada de manera
+ 	global
+ */
 void leerArchivosYGuardarDatos()		
 {											
 	FILE* archivo_instrucciones;		
@@ -182,8 +219,8 @@ void leerArchivosYGuardarDatos()
 				strcpy(listaDatos[aux1].rs,rs);
 
 				listaDatos[aux1].escribe = true;
-
 			}			
+
 			else
 			{
 				strcpy(listaDatos[aux1].funcion,funcion);
@@ -200,111 +237,15 @@ void leerArchivosYGuardarDatos()
 			break;	
 	}
 	fclose(archivo_instrucciones);
-	/*for (int i = 0; i < NINTRUCCIONES; ++i)
-	{
-		printf("%s %s %s %s %s\n",listaDatos[i].funcion,listaDatos[i].rd,listaDatos[i].rs,listaDatos[i].rt, listaDatos[i].inmediate);
-	}*/
-
 }
-void hazardDetenccion(int totIns)
-{
-	FILE *hazard,*solucion;
-	int indice=0,instruccion;
-	hazard = fopen("HazardDetectados.csv","wt");
-	solucion = fopen("HazardSolucion.txt","wt");
 
-	fprintf(hazard,"Hazard;Tipo;Instruccion;CC\n");
-	fprintf(solucion,"Hazard|Solucion\n");
-
-	CCTotal = 4;
-	for (int i = 0; i < totIns-1; ++i)
-	{
-		CCTotal++;
-		if (!pipeline[i].escribe && strcmp(pipeline[i].funcion,"sw")!=0)
-		{
-			instruccion = indiceInstruccion(pipeline[i].id);
-
-			if(pipeline[i].salta == 1)
-			{
-				indice++;
-				fprintf(hazard,"%i\t;Control;%i\t;%i\t\n",indice,instruccion,CCTotal-1);
-				fprintf(solucion,"  %i   |Solucionable con: FLUSH/NOP en IF/ID, ID/EX y EX/MEM\n",indice);
-				CCTotal+=3;
-
-			}
-			
-			else if(pipeline[i].salta == 2)
-			{
-				indice++;
-				fprintf(hazard,"%i\t;Control;%i\t;%i\t\n",indice,instruccion,CCTotal-3);
-				fprintf(solucion,"  %i   |Solucionable con: FLUSH/NOP en IF/ID\n",indice);
-				CCTotal+=1;
-			}
-		}
-
-		if (i<totIns-2)
-		{
-			if (pipeline[i].escribe && (strcmp(pipeline[i].rd,pipeline[i+1].rs)==0 || strcmp(pipeline[i].rd,pipeline[i+1].rt)==0))
-			{
-				instruccion = indiceInstruccion(pipeline[i+1].id);
-				//printf("%s %s %s %s %s\n",pipeline[i].funcion,pipeline[i].rd,pipeline[i].rs,pipeline[i].rt, pipeline[i].inmediate);
-				//printf("%s %s %s %s %s\n",pipeline[i+1].funcion,pipeline[i+1].rd,pipeline[i+1].rs,pipeline[i+1].rt, pipeline[i+1].inmediate);
-				if(strcmp(pipeline[i].funcion,"lw")==0)
-				{
-					indice++;
-					fprintf(hazard,"%i\t;Datos;%i\t;%i\t\n",indice,instruccion,CCTotal-2);
-					fprintf(solucion, "  %i   |Solucionable con: NOP y forwarding MEM/WB a ID/EX\n",indice);
-					CCTotal+=1;
-
-				}
-
-				else
-				{
-					indice++;
-					fprintf(hazard,"%i\t;Datos;%i\t;%i\t\n",indice,instruccion,CCTotal-2);
-					fprintf(solucion,"  %i   |Solucionable con: Forwarding en EX/MEM a ID/EX\n",indice);
-				}
-
-			}
-
-			if (pipeline[i].escribe && (strcmp(pipeline[i].rd,pipeline[i+2].rs)==0 || strcmp(pipeline[i].rd,pipeline[i+2].rt)==0))
-			{
-				instruccion = indiceInstruccion(pipeline[i+2].id);
-				indice++;
-				fprintf(hazard,"%i\t;Datos;%i\t;%i\t\n",indice,instruccion,CCTotal-2);
-				fprintf(solucion,"  %i   |Solucionable con: Forwarding en EX/MEM a ID/EX\n",indice);
-			}
-		}
-		else
-		{
-			if (pipeline[i].escribe && (strcmp(pipeline[i].rd,pipeline[i+1].rs)==0 || strcmp(pipeline[i].rd,pipeline[i+1].rt)==0))
-			{
-				instruccion = indiceInstruccion(pipeline[i+1].id);
-				//printf("%s %s %s %s %s\n",pipeline[i].funcion,pipeline[i].rd,pipeline[i].rs,pipeline[i].rt, pipeline[i].inmediate);
-				//printf("%s %s %s %s %s\n",pipeline[i+1].funcion,pipeline[i+1].rd,pipeline[i+1].rs,pipeline[i+1].rt, pipeline[i+1].inmediate);
-				if(strcmp(pipeline[i].funcion,"lw")==0)
-				{
-					indice++;
-					fprintf(hazard,"%i\t;Datos;%i\t;%i\t\n",indice,instruccion,CCTotal-2);
-					fprintf(solucion, "  %i   |Solucionable con: NOP y forwarding MEM/WB a ID/EX\n",indice);
-					CCTotal+=1;
-				}
-
-				else
-				{
-					indice++;
-					fprintf(hazard,"%i\t;Datos;%i\t;%i\t\n",indice,instruccion,CCTotal-2);
-					fprintf(solucion,"  %i   |Solucionable con: Forwarding en EX/MEM a ID/EX\n",indice);
-				}
-			}
-		}	
-			
-	}
-	fclose(hazard);
-	fclose(solucion);
-	escribir_registros();
-	printf("La cantidad final de ciclos de reloj es %i\n",CCTotal);		
-}
+/*
+ * Se hace el desarrollo de las instrucciones, se pasan una a una las intrucciones que fueron almacenadas
+   en la funcion anterior, y se realiza la ejecución de esta, se guarda en otro arreglo declarado de manera
+   global las intrucciones que han sido ejecutadas y se le pasa este arreglo a la función de hazardDeteccion
+ * @return No retorna nada ya que de de aquí se llama a hazadDeteccion y esta última se encarga de finalizar 
+   la ejecucion del programa
+*/
 void desarrolloDeInstrucciones()
 {
 	int indice = 0, k, aux1 = 0, total, num2, num3, posicion, temporal;
@@ -491,17 +432,133 @@ void desarrolloDeInstrucciones()
 		aux1++;
 	}
 
-	hazardDetenccion(indice);
-	/*for (int j = 0; j < indice; ++j)
-	{
-		printf("%s \n",pipeline[j].funcion);
-	}
-	for (int j = 0; j < 32; ++j)
-	{
-		printf("%s: %i\n",REGISTROS_NOMBRES[j],REGISTROS_VALOR[j]);
-	}*/
+	hazardDeteccion(indice);
 }
 
+/*
+ * Esta funcion se encarga de tomar el arreglo post ejecución de la función anterior, es decir el listado completo
+   de las instrucciones que el programa ejecutó (No se ocupa simplemente el arreglo que se genera al inicio del programa
+   al leer los datos del archivo porque al ejecutar es distinto, hay, saltos, bifurcaciones,etc en donde muchas
+   instrucciones tienden a repetirse)
+ * @param totIns: Es un entero que almacena la cantidad final de instrucciones que se generaron  
+ * @return No retorna nada porque mientras se ejecuta se escriben los archivos de salida 2 y 3, y en cuanto recorre todo
+ 		   genera el archivo con los valores de los registros
+*/
+void hazardDeteccion(int totIns)
+{
+	FILE *hazard,*solucion;
+	char *arch1, *arch2, *arch3;
+	int indice=0,instruccion;
+
+	printf("\nIngrese el nombre de su primer archivo de salida que contendrá los registros y sus valores, este será guardado por defecto en formato .csv\n");
+	arch1 = recibirNombreArchivoSalida(".csv");
+	printf("\nIngrese el nombre de su segundo archivo de salida que contendrá los hazard detectados, este será guardado por defecto en formato .csv\n");
+	arch2 = recibirNombreArchivoSalida(".csv");	
+	printf("\nIngrese el nombre de su primer archivo de salida que contendrá la solucion a los hazard detectados, este será guardado por defecto en formato .txt\n");
+	arch3 = recibirNombreArchivoSalida(".txt");	
+
+
+	hazard = fopen(arch2,"wt");
+	solucion = fopen(arch3,"wt");
+
+	fprintf(hazard,"Hazard;Tipo;Instruccion;CC\n");
+	fprintf(solucion,"Hazard|Solucion\n");
+
+	CCTotal = 4;
+	for (int i = 0; i < totIns-1; ++i)
+	{
+		CCTotal++;
+		if (!pipeline[i].escribe && strcmp(pipeline[i].funcion,"sw")!=0)
+		{
+			instruccion = indiceInstruccion(pipeline[i].id);
+
+			if(pipeline[i].salta == 1)
+			{
+				indice++;
+				fprintf(hazard,"%i\t;Control;%i\t;%i\t\n",indice,instruccion,CCTotal-1);
+				fprintf(solucion,"  %i   |Solucionable con: FLUSH/NOP en IF/ID, ID/EX y EX/MEM\n",indice);
+				CCTotal+=3;
+
+			}
+			
+			else if(pipeline[i].salta == 2)
+			{
+				indice++;
+				fprintf(hazard,"%i\t;Control;%i\t;%i\t\n",indice,instruccion,CCTotal-3);
+				fprintf(solucion,"  %i   |Solucionable con: FLUSH/NOP en IF/ID\n",indice);
+				CCTotal+=1;
+			}
+		}
+
+		if (i<totIns-2)
+		{
+			if (pipeline[i].escribe && (strcmp(pipeline[i].rd,pipeline[i+1].rs)==0 || strcmp(pipeline[i].rd,pipeline[i+1].rt)==0))
+			{
+				instruccion = indiceInstruccion(pipeline[i+1].id);
+				if(strcmp(pipeline[i].funcion,"lw")==0)
+				{
+					indice++;
+					fprintf(hazard,"%i\t;Datos;%i\t;%i\t\n",indice,instruccion,CCTotal-2);
+					fprintf(solucion, "  %i   |Solucionable con: NOP y forwarding MEM/WB a ID/EX\n",indice);
+					CCTotal+=1;
+
+				}
+
+				else
+				{
+					indice++;
+					fprintf(hazard,"%i\t;Datos;%i\t;%i\t\n",indice,instruccion,CCTotal-2);
+					fprintf(solucion,"  %i   |Solucionable con: Forwarding en EX/MEM a ID/EX\n",indice);
+				}
+
+			}
+
+			if (pipeline[i].escribe && (strcmp(pipeline[i].rd,pipeline[i+2].rs)==0 || strcmp(pipeline[i].rd,pipeline[i+2].rt)==0))
+			{
+				instruccion = indiceInstruccion(pipeline[i+2].id);
+				indice++;
+				fprintf(hazard,"%i\t;Datos;%i\t;%i\t\n",indice,instruccion,CCTotal-2);
+				fprintf(solucion,"  %i   |Solucionable con: Forwarding en EX/MEM a ID/EX\n",indice);
+			}
+		}
+		else
+		{
+			if (pipeline[i].escribe && (strcmp(pipeline[i].rd,pipeline[i+1].rs)==0 || strcmp(pipeline[i].rd,pipeline[i+1].rt)==0))
+			{
+				instruccion = indiceInstruccion(pipeline[i+1].id);
+				if(strcmp(pipeline[i].funcion,"lw")==0)
+				{
+					indice++;
+					fprintf(hazard,"%i\t;Datos;%i\t;%i\t\n",indice,instruccion,CCTotal-2);
+					fprintf(solucion, "  %i   |Solucionable con: NOP y forwarding MEM/WB a ID/EX\n",indice);
+					CCTotal+=1;
+				}
+
+				else
+				{
+					indice++;
+					fprintf(hazard,"%i\t;Datos;%i\t;%i\t\n",indice,instruccion,CCTotal-2);
+					fprintf(solucion,"  %i   |Solucionable con: Forwarding en EX/MEM a ID/EX\n",indice);
+				}
+			}
+		}	
+			
+	}
+	fclose(hazard);
+	fclose(solucion);
+	escribir_registros(arch1);
+	free(arch1);
+	free(arch2);
+	free(arch3);
+}
+
+/*
+ * Esta funcion se encarga de encontrar el número de una instrucción especifica a través de un id único que 
+   posee cada instrucción, con número se refiere a por ejemplo esta es la instruccion número 5, según el orden en que
+   están escritas archivo de entrada depende su número, para estas cuentas la etiquetas no cuentan
+   @param id: El id único que se le asocia a una instrucción
+ * @return Retorna un entero que corresponde a que número de instruccion corresponda la instrucción con el id especificado
+*/
 int indiceInstruccion(int id)
 {
 	int indice = 1;
@@ -515,43 +572,61 @@ int indiceInstruccion(int id)
 	}
 	return indice;
 }
-void escribir_registros() 
+
+/*
+ * Esta funcion se encarga de escribir en un archivo de texto los 32 registros
+   @param nombre: Es el nombre con que se llamará el archivo que se creará
+ * @return No retorna ningun dato
+*/
+void escribir_registros(char *nombre) 
 { 
 	int i; FILE *archivo;
-	archivo = fopen("Registros.csv","wt");
+	archivo = fopen(nombre,"wt");
 	for (i = 0; i < 32; ++i)
 		fprintf(archivo,"%s;%d;\n",REGISTROS_NOMBRES[i],REGISTROS_VALOR[i]);
 	
 	fclose(archivo);
 }
-/*void escribir_archivo1()
-{ //Busca que funciones si se ejecutaron y las escribe todas en unen el archivo con las lineas de instrucciones
-	int i; //que hicieron que el programa se ejecutaron, no aparecen funciones que el programa no recorrió
-	char* funcion;//Principalmente por estar en una "etiqueta" a la que nunca se llegaba
 
-
-}*/
-void recibirNombreArchivo() 
+/*
+ * Esta funcion se encarga de pedir por consola al usuario, en nombre para un archivo de salida x
+   @param formato: Se refiere a la extensión que tendrá el archivo
+ * @return retorna el nombre recibido por el usuario
+*/
+char* recibirNombreArchivoSalida(char* formato) 
 {
-	FILE* arch;
-	NOMBRE_ARCHIVO_1 = (char*)calloc(25,sizeof(char));//Estas variables globales definidas en las definiciones
-	printf("Para comenzar primero se necesita el nombre de sus dos archivos de entrada junto a su formato\n");
-	printf("Por ejemplo 'entrada1.txt' o prueba1.txt\n\nRecuerde que el primero es el que contiene las instrucciones y el segundo las lineas de control\n");
+	char* fileOut;
+	bool validar;
+	fileOut = (char*)malloc(sizeof(char)*30);
 	do
 	{
-		printf("\nIngrese el nombre del primer archivo solicitado: ");
-		scanf("%s",NOMBRE_ARCHIVO_1);
-		while(getchar()!='\n');
-		arch = fopen(NOMBRE_ARCHIVO_1,"r");
+		validar = false;
+		printf("\nIngrese el nombre para el archivo: ");
+		scanf("%s",fileOut);	
+		for (int i = 0; i < strlen(fileOut); ++i)
+		{
+			if (fileOut[i] == '\\' || fileOut[i] == '/' || fileOut[i] == ':' || fileOut[i] == '*' || fileOut[i] == '?' || fileOut[i] == '<' || fileOut[i] == '>' || fileOut[i] == '|')
+				validar = true;
+		}
+
+		if (!validar) 
+			validar = false;
+
+		else
+			printf("\nEl nombre escogido no debe poseer ninguno de los siguientes carácteres: \\/ : * ? < > | intente nuevamente\n");
+
 		
-		if (arch == NULL) 
-			printf("No se encuentra archivo con ese nombre, intente nuevamente\n");
-		
-	} while (arch == NULL);
-	fclose(arch);
+	} while (validar);
+	while(getchar()!='\n');
+	strcat(fileOut,formato);
+	return fileOut;
 
 }
-//Función encargada de liberar la memoria que se ocupó durante el procedimiento
+
+/*
+ * Esta funcion se encarga de liberar de la memoria algunos elementos utilizados en el código
+ * @return No retorna ningun dato
+ */
 void liberarMemoria()
 {
 	free(listaDatos);

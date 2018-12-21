@@ -12,7 +12,7 @@ Para hacer funcionar el programa debe compilarse de la siguiente manera:
 		y cuando se termine la compilación se ejecuta escribiendo
 		./programa.exe
 
-4. Ahora solo queda ingresar correctamente el nombre de los archivos de entrada con su extensión, y en caso de estar en otra carpeta se anota la ruta y listo, el programa se va a ejecutar
+4. Ahora solo queda ingresar correctamente el nombre del archivo de entrada con su extensión, y en caso de estar en otra carpeta se anota la ruta y listo, el programa se va a ejecutar
 
 Si se quieren borrar los archivos .o que se generan se debe digitar en la consola el comando make clean y se eliminarán, también se eliminará el ejecutable	
 
