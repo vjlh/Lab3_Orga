@@ -17,11 +17,11 @@ void recibirNombreArchivo()
 {
 	FILE* arch;
 	NOMBRE_ARCHIVO_1 = (char*)calloc(25,sizeof(char));//Estas variables globales definidas en las definiciones
-	printf("Para comenzar primero se necesita el nombre de sus dos archivos de entrada junto a su formato\n");
-	printf("Por ejemplo 'entrada1.txt' o prueba1.txt\n\nRecuerde que el primero es el que contiene las instrucciones y el segundo las lineas de control\n");
+	printf("Para comenzar primero se necesita el nombre de su archivo de entrada junto a su formato\n");
+	printf("Por ejemplo 'entrada.txt'\n");
 	do
 	{
-		printf("\nIngrese el nombre del primer archivo solicitado: ");
+		printf("\nIngrese el nombre del archivo solicitado: ");
 		scanf("%s",NOMBRE_ARCHIVO_1);
 		while(getchar()!='\n');
 		arch = fopen(NOMBRE_ARCHIVO_1,"r");
@@ -250,6 +250,9 @@ void desarrolloDeInstrucciones()
 {
 	int indice = 0, k, aux1 = 0, total, num2, num3, posicion, temporal;
 	char *funcion, *dato1, *dato2, *dato3;
+	REGISTROS_VALOR[29] = 4096;
+	inicioSP = 4096;
+	finSP = -1;
 
 	while (aux1<NINTRUCCIONES) 
 	{	
@@ -258,6 +261,7 @@ void desarrolloDeInstrucciones()
 		//Inmediatas Aritméticas
 		if ((strcmp(funcion,"addi"))==0 || (strcmp(funcion,"subi"))==0 || (strcmp(funcion,"addiu"))==0)
 		{
+			double totaliu;
 			pipeline[indice] = listaDatos[aux1];
 			dato1 = listaDatos[aux1].rd;
 			dato2 = listaDatos[aux1].rs;
@@ -265,19 +269,49 @@ void desarrolloDeInstrucciones()
 
 			num3 = atoi(dato3);
 
+			if(strcmp(dato1,"$sp") == 0)
+			{
+				if(num3%4 == 0)
+					num3 = num3/4;
+
+				else
+				{
+					printf("No se puede ejecutar el programa, ya que addi presenta un error en uno de sus parametros con respecto al stack pointer\n");
+					exit(0);
+				}
+
+			}
+			
+
 			for (int i = 0; i < 32; ++i)
 				if (strcmp(dato2,REGISTROS_NOMBRES[i])==0)
 					num2 = REGISTROS_VALOR[i];
 
-			if((strcmp(funcion,"addi"))==0 || (strcmp(funcion,"addiu"))==0 )
+			if((strcmp(funcion,"addi"))==0)
+			{
 				total = num2 + num3;
+			}
+
+			else if ((strcmp(funcion,"addiu"))==0)
+			{
+				double imm = atoi(dato3);
+				totaliu = num2 + imm;
+			}
 
 			else
 				total = num2 - num3;
 
 			for (int j = 0; j < 32; ++j)
-				if (strcmp(dato1,REGISTROS_NOMBRES[j])==0)
+			{
+				if (strcmp(dato1,REGISTROS_NOMBRES[j])==0 && strcmp(funcion,"addiu")==0)
+					REGISTROS_VALOR[j] = totaliu;
+				else if (strcmp(dato1,REGISTROS_NOMBRES[j])==0)
 					REGISTROS_VALOR[j] = total;
+			}
+			if (total<inicioSP && strcmp(dato1,"$sp") == 0)
+				inicioSP = total;
+			if (total>finSP && strcmp(dato1,"$sp") == 0)
+				finSP = total;
 
 		}			
 
@@ -341,7 +375,6 @@ void desarrolloDeInstrucciones()
 						posicion = k;
 						break;	
 					}
-
 				pipeline[indice].salta = 1;		
 				aux1 = posicion;
 			}
@@ -391,7 +424,8 @@ void desarrolloDeInstrucciones()
 			{	
 				for (k = 0; k < 32; ++k)
 					if (strcmp(dato1,REGISTROS_NOMBRES[k])==0)
-						ARREGLO_SP[(temporal/4)]= REGISTROS_VALOR[k];
+						ARREGLO_SP[REGISTROS_VALOR[29]+temporal]= REGISTROS_VALOR[k];
+					
 				
 			}		
 			else if(temporal%4 != 0)
@@ -399,7 +433,6 @@ void desarrolloDeInstrucciones()
 				printf("No se puede ejecutar el programa, ya que StoreWord presenta un error en uno de sus parametros\n");
 				exit(0);
 			}		
-
 		}		
 			
 		else if (strcmp(funcion,"lw")== 0)
@@ -415,7 +448,7 @@ void desarrolloDeInstrucciones()
 				for (k = 0; k < 32; ++k)
 					if (strcmp(dato1,REGISTROS_NOMBRES[k])==0)
 					{	
-						REGISTROS_VALOR[k] = ARREGLO_SP[(temporal/4)];
+						REGISTROS_VALOR[k] = ARREGLO_SP[(temporal/4)+REGISTROS_VALOR[29]];
 						break;
 					}
 			}
@@ -431,6 +464,9 @@ void desarrolloDeInstrucciones()
 		indice++;
 		aux1++;
 	}
+	printf("Inicio: %i\n",inicioSP);
+	printf("Final: %i\n",REGISTROS_VALOR[29]);
+
 
 	hazardDeteccion(indice);
 }
@@ -450,8 +486,8 @@ void hazardDeteccion(int totIns)
 	char *arch1, *arch2, *arch3;
 	int indice=0,instruccion;
 
-	printf("\nIngrese el nombre de su primer archivo de salida que contendrá los registros y sus valores, este será guardado por defecto en formato .csv\n");
-	arch1 = recibirNombreArchivoSalida(".csv");
+	printf("\nIngrese el nombre de su primer archivo de salida que contendrá los registros y sus valores, este será guardado por defecto en formato .txt\n");
+	arch1 = recibirNombreArchivoSalida(".txt");
 	printf("\nIngrese el nombre de su segundo archivo de salida que contendrá los hazard detectados, este será guardado por defecto en formato .csv\n");
 	arch2 = recibirNombreArchivoSalida(".csv");	
 	printf("\nIngrese el nombre de su primer archivo de salida que contendrá la solucion a los hazard detectados, este será guardado por defecto en formato .txt\n");
@@ -546,6 +582,7 @@ void hazardDeteccion(int totIns)
 	}
 	fclose(hazard);
 	fclose(solucion);
+	//printf("%i \n",&REGISTROS_VALOR[31]);
 	escribir_registros(arch1);
 	free(arch1);
 	free(arch2);
@@ -583,7 +620,14 @@ void escribir_registros(char *nombre)
 	int i; FILE *archivo;
 	archivo = fopen(nombre,"wt");
 	for (i = 0; i < 32; ++i)
-		fprintf(archivo,"%s;%d;\n",REGISTROS_NOMBRES[i],REGISTROS_VALOR[i]);
+		fprintf(archivo,"%s: %d\n",REGISTROS_NOMBRES[i],REGISTROS_VALOR[i]);
+
+	fprintf(archivo,"\nContenido Stack Pointer: [ ");
+	for (int i = inicioSP; i <= finSP; ++i)
+	{
+		fprintf(archivo,"%i ",ARREGLO_SP[i]);
+	}
+	fprintf(archivo,"]");
 	
 	fclose(archivo);
 }

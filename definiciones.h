@@ -33,6 +33,8 @@ Datos *pipeline;
 int NINTRUCCIONES;
 int *REGISTROS_VALOR;
 int *ARREGLO_SP;
+int inicioSP;
+int finSP;
 int ID;
 int CCTotal;
 char *NOMBRE_ARCHIVO_1;
